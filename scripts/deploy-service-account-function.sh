@@ -209,7 +209,7 @@ while true; do
         4) BASE_IMAGE="java21"; break ;;
         5) BASE_IMAGE="ruby34"; break ;;
         6) BASE_IMAGE="dotnet8"; break ;;
-        7) BASE_IMAGE="php83"; break ;;
+        7) BASE_IMAGE="php84"; break ;;
         8) 
             echo -e "${BLUE}Enter custom base image name:${NC}"
             read -p "> " BASE_IMAGE
