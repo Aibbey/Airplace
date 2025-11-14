@@ -14,7 +14,6 @@ export function Canvas() {
   const canvaSize = 500;
 
   const drawingCanvasRef = useRef<CanvasRef>(null);
-  const backgroundCanvasRef = useRef<CanvasRef>(null);
   const foregroundCanvasRef = useRef<CanvasRef>(null);
 
   const [tool, setTool] = useState<Tool>("paint");
@@ -37,7 +36,7 @@ export function Canvas() {
       <ReactPixelArtCanvas
         width={canvaSize}
         height={canvaSize}
-        styles={{ border: "1px solid #ccc" }}
+        styles={{ border: "1px solid #ffffffff" }}
       >
         <DrawingCanvas
           ref={drawingCanvasRef}
