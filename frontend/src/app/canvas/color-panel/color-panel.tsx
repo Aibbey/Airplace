@@ -7,7 +7,7 @@ import { useAppContext } from "@/app/context/AppContext";
 
 export function ColorPanel() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  // const [colors, setColors] = useState(String);
+  const [colors, setColors] = useState(String);
   const { selectedColor, setSelectedColor } = useAppContext();
 
   return (
@@ -18,7 +18,6 @@ export function ColorPanel() {
       >
         Place a pixel
       </button>
-
       <div
         className={`fixed inset-0 z-10 transition-opacity duration-300 ${
           isPanelOpen
@@ -41,19 +40,23 @@ export function ColorPanel() {
             {COLORS_PANEL.map((color) => (
               <button
                 key={color}
-                onClick={() => setSelectedColor(color)}
+                onClick={() => setColors(color)}
                 className="h-12 w-12 rounded-md mx-0.5 border border-gray-300 hover:shadow-xl/50 transition-shadow duration-300"
                 style={{ backgroundColor: color }}
               />
             ))}
           </div>
-          <div className="text-black">{selectedColor}</div>
           <div className="mt-4 mx-auto flex justify-center gap-7">
             <CircleX
               onClick={() => setIsPanelOpen(false)}
               className="mt-2 bg-slate-900 h-10 text-white px-4 py-2 rounded-lg w-50  hover:shadow-xl/50 transition-shadow duration-300"
             />
-            <CircleCheck className="mt-2 h-10 bg-slate-900 text-white px-4 py-2 rounded-lg w-50  hover:shadow-xl/50 transition-shadow duration-300" />
+            <CircleCheck
+              onClick={() => {
+                setSelectedColor(colors), setIsPanelOpen(false);
+              }}
+              className="mt-2 h-10 bg-slate-900 text-white px-4 py-2 rounded-lg w-50  hover:shadow-xl/50 transition-shadow duration-300"
+            />
           </div>
         </div>
       </div>
