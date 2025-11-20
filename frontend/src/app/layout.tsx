@@ -34,9 +34,7 @@ export default function RootLayout({
       >
         <AppProvider>
           <Dropdown />
-          <div style={{ display: "grid", placeItems: "center" }}>
-            <Canvas />
-          </div>
+          <Canvas />
           <ColorPanel />
           {children}
         </AppProvider>
