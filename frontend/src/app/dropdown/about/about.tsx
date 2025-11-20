@@ -6,15 +6,8 @@ import {
   Dialog,
   DialogPanel,
   DialogTitle,
-  Field,
-  Input,
-  Label,
-  Fieldset,
-  Button,
-  Checkbox,
 } from "@headlessui/react";
-import { CheckIcon, X } from "lucide-react";
-import clsx from "clsx";
+import { X } from "lucide-react";
 import { useAppContext } from "@/app/context/AppContext";
 
 export function About() {
@@ -36,7 +29,7 @@ export function About() {
             />
           </div>
           <div className="mt-6">
-            <Description className="text-gray-700 flex flex-col gap-4">
+            <Description as="div" className="text-gray-700 flex flex-col gap-4">
               <div>There is an empty canvas.</div>
               <div>
                 You can place a pixel there, but you must wait to place another
