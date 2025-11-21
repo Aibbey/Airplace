@@ -1,0 +1,74 @@
+swagger: "2.0"
+info:
+  title: AirPlace - API Gateway
+  description: AirPlace Gateway configuration
+  version: 1.0.0
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /v1/proxy-interface:
+    post:
+      summary: API proxy
+      operationId: proxy
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
+          schema:
+            # Setting 'type: object' with no 'properties' is the OAS 2.0 way to allow a flexible JSON payload.
+            type: object
+      x-google-backend:
+        # Standardized with no trailing slash
+        address: https://proxy-interface-hn2wtuxuha-ew.a.run.app
+        # address: https://proxymethod-hn2wtuxuha-ew.a.run.app
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+
+  /v1/add-user:
+    post:
+      summary: Add User
+      operationId: addUser
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
+          schema:
+            # Setting 'type: object' with no 'properties' is the OAS 2.0 way to allow a flexible JSON payload.
+            type: object
+      x-google-backend:
+        # Standardized with no trailing slash
+        address: https://adduser-hn2wtuxuha-ew.a.run.app
+      responses:
+        "200":
+          description: Succesful Response from discord
+          schema:
+            type: string
+
+  /v1/discord/interactions:
+    post:
+      summary: Discord Implementation
+      operationId: discord
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
+          schema:
+            # Setting 'type: object' with no 'properties' is the OAS 2.0 way to allow a flexible JSON payload.
+            type: object
+      x-google-backend:
+        # Standardized with no trailing slash
+        address: https://discord-interactions-hn2wtuxuha-ew.a.run.app
+        # address: https://discord-interactions-hn2wtuxuha-ew.a.run.app
+      responses:
+        "200":
+          description: Succesful Response from discord
+          schema:
+            type: string

@@ -1,4 +1,4 @@
-module draw
+module example.com/draw
 
 go 1.25.4
 
