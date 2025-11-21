@@ -7,8 +7,17 @@ import { useAppContext } from "@/app/context/AppContext";
 
 export function ColorPanel() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [colors, setColors] = useState(String);
   const { selectedColor, setSelectedColor } = useAppContext();
+
+  // couleur en cours de sélection dans le panel
+  const [colors, setColors] = useState<string | null>(selectedColor ?? null);
+
+  // Quand on ouvre le panel, on initialise avec la couleur déjà sélectionnée
+  useEffect(() => {
+    if (isPanelOpen) {
+      setColors(selectedColor ?? null);
+    }
+  }, [isPanelOpen, selectedColor]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 flex justify-center">
@@ -18,6 +27,7 @@ export function ColorPanel() {
       >
         Place a pixel
       </button>
+
       <div
         className={`fixed inset-0 z-10 transition-opacity duration-300 ${
           isPanelOpen
@@ -27,35 +37,51 @@ export function ColorPanel() {
       >
         <div
           className={`
-    absolute bottom-4 left-1/2
-    w-[90%] max-w-m
-    bg-white shadow-2xl p-6 rounded-2xl
-    transform transition-transform duration-300
-    -translate-x-1/2
-    ${isPanelOpen ? "translate-y-0" : "translate-y-full"}
-  `}
+            absolute bottom-4 left-1/2
+            w-[90%] max-w-m
+            bg-white shadow-2xl p-6 rounded-2xl
+            transform transition-transform duration-300
+            -translate-x-1/2
+            ${isPanelOpen ? "translate-y-0" : "translate-y-full"}
+          `}
           onClick={(e) => e.stopPropagation()}
         >
-          <div>
-            {COLORS_PANEL.map((color) => (
-              <button
-                key={color}
-                onClick={() => setColors(color)}
-                className="h-12 w-12 rounded-md mx-0.5 border border-gray-300 hover:shadow-xl/50 transition-shadow duration-300"
-                style={{ backgroundColor: color }}
-              />
-            ))}
+          <div className="flex flex-wrap justify-center">
+            {COLORS_PANEL.map((color) => {
+              const isSelected = color === colors;
+
+              return (
+                <button
+                  key={color}
+                  onClick={() => setColors(color)}
+                  className={`
+                    h-12 w-12 rounded-md mx-0.5 border border-gray-300
+                    hover:shadow-xl/50 transition-shadow duration-300
+                    ${
+                      isSelected
+                        ? "shadow-[0_0_0_3px_rgba(59,130,246,0.9)] scale-105"
+                        : ""
+                    }
+                  `}
+                  style={{ backgroundColor: color }}
+                />
+              );
+            })}
           </div>
+
           <div className="mt-4 mx-auto flex justify-center gap-7">
             <CircleX
               onClick={() => setIsPanelOpen(false)}
-              className="mt-2 bg-slate-900 h-10 text-white px-4 py-2 rounded-lg w-50  hover:shadow-xl/50 transition-shadow duration-300"
+              className="mt-2 bg-slate-900 h-10 text-white px-4 py-2 rounded-lg w-50 hover:shadow-xl/50 transition-shadow duration-300 cursor-pointer"
             />
             <CircleCheck
               onClick={() => {
-                setSelectedColor(colors), setIsPanelOpen(false);
+                if (colors) {
+                  setSelectedColor(colors);
+                }
+                setIsPanelOpen(false);
               }}
-              className="mt-2 h-10 bg-slate-900 text-white px-4 py-2 rounded-lg w-50  hover:shadow-xl/50 transition-shadow duration-300"
+              className="mt-2 h-10 bg-slate-900 text-white px-4 py-2 rounded-lg w-50 hover:shadow-xl/50 transition-shadow duration-300 cursor-pointer"
             />
           </div>
         </div>
