@@ -1,0 +1,91 @@
+openapi: 3.0.4
+info:
+  title: AirPlace - API Gateway
+  description: AirPlace Gateway configuration
+  version: 1.0.0
+servers:
+  - url: https://
+paths:
+  /v1/proxy-interface:
+    post:
+      summary: API proxy
+      operationId: proxy
+      requestBody:
+        required: true
+        description: Api Gateway endpoint to proxy the request to the appropriate service.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Pixel"
+      x-google-backend:
+        address: ${PROXY_INTERFACE_URL}
+      responses:
+        "200":
+          description: A successful response
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /v1/add-user:
+    post:
+      summary: Add User
+      operationId: addUser
+      requestBody:
+        required: true
+        description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
+        content:
+          application/json:
+            schema:
+              type: object
+      x-google-backend:
+        address: ${ADD_USER_URL}
+      responses:
+        "200":
+          description: Succesful Response from discord
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /v1/discord/interactions:
+    post:
+      summary: Discord Implementation
+      operationId: discord
+      requestBody:
+        required: true
+        description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
+        content:
+          application/json:
+            schema:
+              type: object
+      x-google-backend:
+        address: ${DISCORD_INTERACTIONS_URL}
+      responses:
+        "200":
+          description: Succesful Response from discord
+          content:
+            application/json:
+              schema:
+                type: string
+
+components:
+  schemas:
+    Pixel:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int32
+        y:
+          type: integer
+          format: int32
+        color:
+          type: integer
+          format: int32
+        user:
+          type: string
+          pattern: '^[0-9]{17,18}$'
+        timestamp:
+          type: string
+          format: date-time
