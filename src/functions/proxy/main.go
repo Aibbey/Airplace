@@ -33,7 +33,7 @@ import (
 // }
 
 func init() {
-	functions.HTTP("proxyMethod", publishUpdate)
+	functions.HTTP("proxyMethod", publishDraw)
 }
 
 type PubSubMessage struct {
@@ -101,7 +101,7 @@ func temporal(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Test message sent successfully")
 }
 
-func publishUpdate(w http.ResponseWriter, r *http.Request) {
+func publishDraw(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Publish Update function...")
 	ctx := r.Context()
 	projectId := "serveless-epitech-dev"
@@ -163,6 +163,6 @@ func publishUpdate(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Message published: %s", msgId)
 }
 
-func publishDraw(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Publish Draw function...")
+func publishUpdate(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Publish Update function...")
 }
