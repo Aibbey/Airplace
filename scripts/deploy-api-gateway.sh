@@ -42,6 +42,14 @@ else
     echo -e "${GREEN}✓${NC} Region: ${BLUE}$REGION${NC}"
 fi
 
+# Get backend auth service account (from environment variable or prompt)
+if [ -z "$BACKEND_SERVICE_ACCOUNT" ]; then
+    echo -e "${YELLOW}Backend service account not set in BACKEND_SERVICE_ACCOUNT environment variable${NC}"
+    read -p "Enter Backend Auth Service Account Email: " BACKEND_SERVICE_ACCOUNT
+else
+    echo -e "${GREEN}✓${NC} Backend Service Account: ${BLUE}$BACKEND_SERVICE_ACCOUNT${NC}"
+fi
+
 echo ""
 
 # Extract all unique variables from the YAML file (pattern: ${VAR_NAME})
@@ -260,7 +268,7 @@ if [ "$DEPLOYMENT_FAILED" = false ]; then
     echo -e "${GREEN}gcloud api-gateway api-configs create \"$CONFIG_ID\" \\${NC}"
     echo -e "${GREEN}    --api=\"$API_ID\" \\${NC}"
     echo -e "${GREEN}    --openapi-spec=api-config-deployed.yaml \\${NC}"
-    echo -e "${GREEN}    --backend-auth-service-account=api-gateway-invoker@serveless-epitech-dev.iam.gserviceaccount.com \\${NC}"
+    echo -e "${GREEN}    --backend-auth-service-account=$BACKEND_SERVICE_ACCOUNT \\${NC}"
     echo -e "${GREEN}    --project=\"$PROJECT_ID\"${NC}"
     echo ""
     
@@ -269,7 +277,7 @@ if [ "$DEPLOYMENT_FAILED" = false ]; then
         gcloud api-gateway api-configs create "$CONFIG_ID" \
             --api="$API_ID" \
             --openapi-spec=api-config-deployed.yaml \
-            --backend-auth-service-account=api-gateway-invoker@serveless-epitech-dev.iam.gserviceaccount.com \
+            --backend-auth-service-account="$BACKEND_SERVICE_ACCOUNT" \
             --project="$PROJECT_ID"
         
         if [ $? -eq 0 ]; then
