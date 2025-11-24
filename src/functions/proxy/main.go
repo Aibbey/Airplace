@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"bytes"
@@ -8,28 +8,32 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 )
 
-func main() {
-	log.Printf("Starting Proxy server...")
-	http.HandleFunc("POST /pixel-draw", publishDraw)
-	http.HandleFunc("POST /pixel-update", publishUpdate)
-	http.HandleFunc("/temporal", temporal)
+// func main() {
+// 	log.Printf("Starting Proxy server...")
+// 	http.HandleFunc("POST /pixel-draw", publishDraw)
+// 	http.HandleFunc("POST /pixel-update", publishUpdate)
+// 	http.HandleFunc("/temporal", temporal)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8081"
-		log.Printf("defaulting to port %s", port)
-	}
+// 	port := os.Getenv("PORT")
+// 	if port == "" {
+// 		port = "8081"
+// 		log.Printf("defaulting to port %s", port)
+// 	}
 
-	log.Printf("listening on port %s", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err)
-	}
+// 	log.Printf("listening on port %s", port)
+// 	if err := http.ListenAndServe(":"+port, nil); err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+
+func init() {
+	functions.HTTP("proxyMethod", publishUpdate)
 }
 
 type PubSubMessage struct {
