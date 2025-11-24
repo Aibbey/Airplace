@@ -10,15 +10,15 @@ servers:
 x-google-api-management:
   backends:
     proxy-interface-backend:
-      address: ${PROXY_INTERFACE_URL}
+      address: https://proxy-interface-hn2wtuxuha-ew.a.run.app
       pathTranslation: APPEND_PATH_TO_ADDRESS
       protocol: "http/1.1"
     add-user-backend:
-      address: ${ADD_USER_URL}
+      address: https://adduser-hn2wtuxuha-ew.a.run.app
       pathTranslation: APPEND_PATH_TO_ADDRESS
       protocol: "http/1.1"
     discord-interactions-backend:
-      address: ${DISCORD_INTERACTIONS_URL}
+      address: https://discord-interactions-hn2wtuxuha-ew.a.run.app
       pathTranslation: APPEND_PATH_TO_ADDRESS
       protocol: "http/1.1"
 
