@@ -1,0 +1,14 @@
+.canvas-content {
+  --x: 0px;
+  --y: 0px;
+  --zoom: 5;
+
+  transform: translate(var(--x), var(--y)) scale(var(--zoom));
+  transform-origin: top left;
+
+  cursor: grab;
+}
+
+.canvas-dragging {
+  cursor: grabbing;
+}

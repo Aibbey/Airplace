@@ -24,3 +24,6 @@ export const COLORS_PANEL = [
     "#FFE600",
     "#573400",
 ];
+
+export const GRID_SIZE = 1000;
+export const PIXEL_SIZE = 1;

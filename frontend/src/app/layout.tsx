@@ -6,6 +6,8 @@ import { AppProvider } from "./context/AppContext";
 import { ColorPanel } from "@/app/canvas/color-panel/color-panel";
 
 import "./globals.css";
+import { CanvaPixel } from "./canvas/canva-pixel/canva-pixel";
+import { ColorCoord } from "./canvas/canva-coord/canva-coord";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +37,7 @@ export default function RootLayout({
         <AppProvider>
           <Dropdown />
           <Canvas />
+          <ColorCoord />
           <ColorPanel />
           {children}
         </AppProvider>

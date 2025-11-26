@@ -1,20 +1,8 @@
 "use client";
 
 import React from "react";
-import {
-  Description,
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Field,
-  Input,
-  Label,
-  Fieldset,
-  Button,
-  Checkbox,
-} from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Button } from "@headlessui/react";
 import { X } from "lucide-react";
-import clsx from "clsx";
 import { useAppContext } from "@/app/context/AppContext";
 import { signIn } from "@/lib/api/auth-client";
 

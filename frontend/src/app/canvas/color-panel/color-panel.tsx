@@ -7,12 +7,10 @@ import { useAppContext } from "@/app/context/AppContext";
 
 export function ColorPanel() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const { selectedColor, setSelectedColor } = useAppContext();
+  const { selectedColor, setSelectedColor, setShouldZoom } = useAppContext();
 
-  // couleur en cours de sélection dans le panel
   const [colors, setColors] = useState<string | null>(selectedColor ?? null);
 
-  // Quand on ouvre le panel, on initialise avec la couleur déjà sélectionnée
   useEffect(() => {
     if (isPanelOpen) {
       setColors(selectedColor ?? null);
@@ -22,7 +20,7 @@ export function ColorPanel() {
   return (
     <div className="fixed bottom-4 left-0 right-0 flex justify-center">
       <button
-        onClick={() => setIsPanelOpen(true)}
+        onClick={() => (setIsPanelOpen(true), setShouldZoom(true))}
         className="bg-white px-8 py-3 text-xl text-black rounded-full shadow-xl/50 hover:shadow-xl/100 hover:bg-blue-100 transition-shadow duration-300 "
       >
         Place a pixel
