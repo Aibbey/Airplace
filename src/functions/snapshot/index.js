@@ -9,7 +9,7 @@ functions.http('snapshot-make', async (req, res) => {
   try {
     const bucket = 'serverless-epitech-snapshots';
 
-    if (!req.body || !req.body.message) {
+    if (Buffer.from(req.body.message.data, 'base64').toString('utf-8') == "schedule") {
       console.log('start creating sheduled file');
       var filename = 'snapshot-schedule.png';
     } else {
