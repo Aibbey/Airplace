@@ -139,6 +139,12 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 		pixelKey := fmt.Sprintf("%d_%d", localX, localY)
 
 		chunkId := fmt.Sprintf("canvas_chunks_%d_%d", int(pixel.X)/chunkSize, int(pixel.Y)/chunkSize)
+		if _, err := client.Collection("users").Doc(pixel.User).Set(ctx, map[string]any{
+			"lastupdated": firestore.ServerTimestamp,
+		}); err != nil {
+			log.Printf("error queuing user document: %v", err)
+			continue
+		}
 		if chunkUpdates[chunkId] == nil {
 			chunkUpdates[chunkId] = map[string]any{
 				"size": int32(chunkSize),
@@ -150,6 +156,7 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 				"lastUpdated": firestore.ServerTimestamp,
 			}
 		}
+
 	}
 
 	batch := client.BulkWriter(ctx)
@@ -161,7 +168,6 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 		}
 	}
 
-	// Add trigger-reset document to the batch
 	triggerRef := client.Collection("trigger-reset").Doc("trigger-reset")
 	if _, err := batch.Set(triggerRef, map[string]any{
 		"lastTriggered": firestore.ServerTimestamp,
