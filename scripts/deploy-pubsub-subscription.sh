@@ -173,6 +173,9 @@ show_summary() {
         echo -e "${BLUE}Dead Letter Topic:${NC} $DEAD_LETTER_TOPIC"
         echo -e "${BLUE}Max Delivery Attempts:${NC} $MAX_DELIVERY_ATTEMPTS"
     fi
+    if [ -n "$FILTER_STRING" ]; then
+        echo -e "${BLUE}Message Filter:${NC} $FILTER_STRING"
+    fi
     if [ -n "$PUSH_AUTH_SA" ]; then
         echo -e "${BLUE}Topic Publisher & Subscriber SA:${NC} $PUSH_AUTH_SA"
     fi
@@ -205,14 +208,31 @@ deploy_subscription() {
         echo "Would execute:"
         echo "gcloud pubsub subscriptions create $SUBSCRIPTION_NAME \\"
         echo "  --topic=$TOPIC_NAME \\"
-        echo "  --ack-deadline=$ACK_DEADLINE \\"
+        if [ -n "$PUSH_ENDPOINT" ] || [ -n "$DEAD_LETTER_TOPIC" ] || [ -n "$FILTER_STRING" ]; then
+            echo "  --ack-deadline=$ACK_DEADLINE \\"
+        else
+            echo "  --ack-deadline=$ACK_DEADLINE"
+        fi
         if [ -n "$PUSH_ENDPOINT" ]; then
-            echo "  --push-endpoint=$PUSH_ENDPOINT \\"
-            echo "  --push-auth-service-account=$PUSH_AUTH_SA \\"
+            if [ -n "$DEAD_LETTER_TOPIC" ] || [ -n "$FILTER_STRING" ]; then
+                echo "  --push-endpoint=$PUSH_ENDPOINT \\"
+                echo "  --push-auth-service-account=$PUSH_AUTH_SA \\"
+            else
+                echo "  --push-endpoint=$PUSH_ENDPOINT \\"
+                echo "  --push-auth-service-account=$PUSH_AUTH_SA"
+            fi
         fi
         if [ -n "$DEAD_LETTER_TOPIC" ]; then
-            echo "  --dead-letter-topic=$DEAD_LETTER_TOPIC \\"
-            echo "  --max-delivery-attempts=$MAX_DELIVERY_ATTEMPTS \\"
+            if [ -n "$FILTER_STRING" ]; then
+                echo "  --dead-letter-topic=$DEAD_LETTER_TOPIC \\"
+                echo "  --max-delivery-attempts=$MAX_DELIVERY_ATTEMPTS \\"
+            else
+                echo "  --dead-letter-topic=$DEAD_LETTER_TOPIC \\"
+                echo "  --max-delivery-attempts=$MAX_DELIVERY_ATTEMPTS"
+            fi
+        fi
+        if [ -n "$FILTER_STRING" ]; then
+            echo "  --filter=\"$FILTER_STRING\""
         fi
         echo "  --project=$PROJECT_ID"
         if [ -n "$PUSH_ENDPOINT" ] && [ -n "$SERVICE_NAME" ] && [ -n "$REGION" ]; then
@@ -268,8 +288,43 @@ deploy_subscription() {
         create_cmd="$create_cmd --max-delivery-attempts=\"$MAX_DELIVERY_ATTEMPTS\""
     fi
     
+    # Add filter if specified
+    if [ -n "$FILTER_STRING" ]; then
+        create_cmd="$create_cmd --filter=\"$FILTER_STRING\""
+    fi
+    
     # Create the subscription
     print_info "Creating Pub/Sub subscription: $SUBSCRIPTION_NAME"
+    echo "Executing:"
+    echo "gcloud pubsub subscriptions create \"$SUBSCRIPTION_NAME\" \\"
+    echo "  --topic=\"$TOPIC_NAME\" \\"
+    if [ -n "$PUSH_ENDPOINT" ] || [ -n "$DEAD_LETTER_TOPIC" ] || [ -n "$FILTER_STRING" ]; then
+        echo "  --ack-deadline=\"$ACK_DEADLINE\" \\"
+    else
+        echo "  --ack-deadline=\"$ACK_DEADLINE\""
+    fi
+    if [ -n "$PUSH_ENDPOINT" ]; then
+        if [ -n "$DEAD_LETTER_TOPIC" ] || [ -n "$FILTER_STRING" ]; then
+            echo "  --push-endpoint=\"$PUSH_ENDPOINT\" \\"
+            echo "  --push-auth-service-account=\"$PUSH_AUTH_SA\" \\"
+        else
+            echo "  --push-endpoint=\"$PUSH_ENDPOINT\" \\"
+            echo "  --push-auth-service-account=\"$PUSH_AUTH_SA\""
+        fi
+    fi
+    if [ -n "$DEAD_LETTER_TOPIC" ]; then
+        if [ -n "$FILTER_STRING" ]; then
+            echo "  --dead-letter-topic=\"$DEAD_LETTER_TOPIC\" \\"
+            echo "  --max-delivery-attempts=\"$MAX_DELIVERY_ATTEMPTS\" \\"
+        else
+            echo "  --dead-letter-topic=\"$DEAD_LETTER_TOPIC\" \\"
+            echo "  --max-delivery-attempts=\"$MAX_DELIVERY_ATTEMPTS\""
+        fi
+    fi
+    if [ -n "$FILTER_STRING" ]; then
+        echo "  --filter=\"$FILTER_STRING\""
+    fi
+    echo "  --project=\"$PROJECT_ID\""
     eval $create_cmd
     
     if [ $? -eq 0 ]; then
@@ -551,18 +606,43 @@ if ask_yes_no "Do you want to configure a dead letter topic?" "y"; then
                 print_success "Dead letter topic '$DEAD_LETTER_TOPIC' found"
                 break
             else
-                print_error "Dead letter topic '$DEAD_LETTER_TOPIC' does not exist in project '$PROJECT_ID'"
-                print_info "Please create the topic first using: ./deploy-pubsub-topic.sh"
-                if ! ask_yes_no "Do you want to try another topic name?" "y"; then
-                    print_info "Dead letter topic configuration cancelled"
-                    DEAD_LETTER_TOPIC=""
-                    break
+                print_warning "Dead letter topic '$DEAD_LETTER_TOPIC' does not exist in project '$PROJECT_ID'"
+                if ask_yes_no "Do you want to create the dead letter topic '$DEAD_LETTER_TOPIC'?" "y"; then
+                    print_info "Creating dead letter topic: $DEAD_LETTER_TOPIC"
+                    gcloud pubsub topics create "$DEAD_LETTER_TOPIC" \
+                        --project="$PROJECT_ID"
+                    
+                    if [ $? -eq 0 ]; then
+                        print_success "Dead letter topic '$DEAD_LETTER_TOPIC' created successfully"
+                        break
+                    else
+                        print_error "Failed to create dead letter topic '$DEAD_LETTER_TOPIC'"
+                        if ! ask_yes_no "Do you want to try another topic name?" "y"; then
+                            print_info "Dead letter topic configuration cancelled"
+                            DEAD_LETTER_TOPIC=""
+                            break
+                        fi
+                        echo ""
+                    fi
+                else
+                    if ! ask_yes_no "Do you want to try another topic name?" "y"; then
+                        print_info "Dead letter topic configuration cancelled"
+                        DEAD_LETTER_TOPIC=""
+                        break
+                    fi
+                    echo ""
                 fi
-                echo ""
             fi
         else
-            # In dry-run mode, just accept the topic name
-            print_warning "[DRY RUN] Would check if dead letter topic '$DEAD_LETTER_TOPIC' exists"
+            # In dry-run mode, check if topic exists and show what would be created
+            if check_topic_exists "$DEAD_LETTER_TOPIC" "$PROJECT_ID" >/dev/null 2>&1; then
+                print_warning "[DRY RUN] Dead letter topic '$DEAD_LETTER_TOPIC' exists"
+            else
+                print_warning "[DRY RUN] Dead letter topic '$DEAD_LETTER_TOPIC' does not exist"
+                echo "Would execute:"
+                echo "gcloud pubsub topics create $DEAD_LETTER_TOPIC \\"
+                echo "  --project=$PROJECT_ID"
+            fi
             break
         fi
     done
@@ -586,6 +666,25 @@ if ask_yes_no "Do you want to configure a dead letter topic?" "y"; then
                 exit 0
             fi
         fi
+    fi
+fi
+
+echo ""
+
+# Ask if this subscription should have a message filter
+FILTER_STRING=""
+if ask_yes_no "Do you want to add a message filter to this subscription?" "n"; then
+    echo ""
+    print_info "Message Filter Configuration"
+    print_info "Enter a filter expression to filter messages based on attributes."
+    print_info "Example: attributes.type=\"notification\" AND attributes.priority=\"high\""
+    FILTER_STRING=$(get_input "Enter filter expression" "")
+    
+    if [ -z "$FILTER_STRING" ]; then
+        print_warning "Filter string is empty, subscription will receive all messages"
+        FILTER_STRING=""
+    else
+        print_success "Filter configured: $FILTER_STRING"
     fi
 fi
 
@@ -613,6 +712,9 @@ if deploy_subscription; then
     if [ -n "$DEAD_LETTER_TOPIC" ]; then
         echo -e "${BLUE}Dead Letter Topic:${NC} ${DEAD_LETTER_TOPIC}"
         echo -e "${BLUE}Max Delivery Attempts:${NC} ${MAX_DELIVERY_ATTEMPTS}"
+    fi
+    if [ -n "$FILTER_STRING" ]; then
+        echo -e "${BLUE}Message Filter:${NC} ${FILTER_STRING}"
     fi
     if [ -n "$PUSH_AUTH_SA" ]; then
         echo -e "${BLUE}Topic Publisher & Subscriber Service Account:${NC} ${PUSH_AUTH_SA}"
