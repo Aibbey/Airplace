@@ -19,8 +19,8 @@ export function Dropdown(): JSX.Element {
 
   return (
     <div className="fixed top-3 z-[10000]">
-      <Menu as="div" className="relative inline-block">
-        <MenuButton className="mt-12 ml-12 flex items-center justify-center rounded-full size-12 bg-white text-sm font-semibold text-black data-focus:text-blue hover:bg-blue-100">
+      <Menu as="div" className="relative inline-block ">
+        <MenuButton className="mt-12 ml-12 flex items-center justify-center rounded-full shadow-xl/50 size-12 bg-white text-sm font-semibold text-black data-focus:text-blue hover:bg-blue-100  ">
           <EllipsisVertical className="w-6 h-6" />
         </MenuButton>
 

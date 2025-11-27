@@ -20,7 +20,7 @@ export function About() {
       className="relative z-50"
     >
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4 overflow-y-auto">
-        <DialogPanel className="w-full max-w-md rounded-md bg-white p-10 text-black">
+        <DialogPanel className="w-full max-w-md rounded-md bg-white p-10 text-black shadow-xl/50">
           <div className="flex items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="flex font-bold text-3xl">About</DialogTitle>
             <X
