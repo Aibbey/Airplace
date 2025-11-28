@@ -1,11 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+
+const client = new SecretManagerServiceClient();
+const name = process.env.NEXT_PUBLIC_DISCORD_SECRET || "";
+
+async function getDiscordSecret() {
+  if (!name) {
+    console.error('DISCORD secret name not configured');
+    return "";
+  }
+
+  const [version] = await client.accessSecretVersion({ name });
+  const raw = version?.payload?.data;
+  if (!raw) {
+    console.error(`No secret payload found for secret name: ${name}`);
+    return "";
+  }
+
+  try {
+    if (typeof (raw as any).toString === "function") {
+      return (raw as any).toString();
+    }
+    return Buffer.from(raw as Uint8Array).toString("utf8");
+  } catch (err) {
+    console.error("Failed to parse secret payload:", err);
+    return "";
+  }
+}
 
 export async function POST(request: NextRequest) {
   const { code, code_verifier, state } = await request.json();
+  
 
   const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || "";
-  const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
+  const DISCORD_CLIENT_SECRET = await getDiscordSecret();
   const DISCORD_REDIRECT_URI = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || "";
 
   if (!DISCORD_CLIENT_SECRET) {
