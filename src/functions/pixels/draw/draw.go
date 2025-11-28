@@ -10,9 +10,12 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
+
+	"example.com/logging"
 
 	"cloud.google.com/go/firestore"
-	pubsub "cloud.google.com/go/pubsub/v2"
+	"cloud.google.com/go/pubsub/v2"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 )
 
@@ -40,148 +43,98 @@ type ChunkData struct {
 	Pixels map[string]any `firestore:"pixels" json:"pixels"`
 }
 
+type UserInfo struct {
+	UserID string `firestore:"userID" json:"userID"`
+}
+
+var (
+	projectId         string
+	firestoreDatabase string
+	chunkSizeEnv      string
+	topicID           string
+	addUserTopicID    string
+	triggerResetName  string
+)
+
 func init() {
+	projectId = os.Getenv("PROJECT_ID")
+	firestoreDatabase = os.Getenv("FIRESTORE_DATABASE")
+	chunkSizeEnv = os.Getenv("CHUNK_SIZE")
+	topicID = os.Getenv("PIXEL_UPDATE_TOPIC")
+	addUserTopicID = os.Getenv("ADD_USER_TOPIC")
+	triggerResetName = os.Getenv("TRIGGER_RESET_NAME")
+	log.SetFlags(0)
+
 	functions.HTTP("drawPixel", drawPixel)
 }
 
-func processMessage(w http.ResponseWriter, r *http.Request) {
-	projectId := os.Getenv("PROJECT_ID")
-	subscriptionName := os.Getenv("SUBSCRIPTION_NAME")
-
-	if projectId == "" {
-		http.Error(w, "PROJECT_ID environment variable is not set", http.StatusInternalServerError)
-		return
-	}
-
-	if subscriptionName == "" {
-		http.Error(w, "SUBSCRIPTION_NAME environment variable is not set", http.StatusInternalServerError)
-		return
-	}
-
-	ctx := r.Context()
-	client, err := pubsub.NewClient(ctx, projectId)
-	if err != nil {
-		log.Printf("Error while creating PubSub client: %v", err)
-		http.Error(w, "Bad request", http.StatusInternalServerError)
-		return
-	}
-	defer client.Close()
-
-	// if subscriptionName == "" {
-	// subscriptionName = "sub-pixel-draw"
-	// }
-
-	// maxPullingMessages := 3
-	// pixelsInfos := make([]PixelInfo, 0, maxPullingMessages)
-
-	// log.Printf("Max pulling messages: %d", maxPullingMessages)
-	// sub := client.Subscriber(subscriptionName)
-	// var i int32 = 0
-	// sub.ReceiveSettings.MaxOutstandingMessages = maxPullingMessages
-	// sub.ReceiveSettings.NumGoroutines = 1
-
-	// cctx, cancel := context.WithCancel(ctx)
-	// defer cancel()
-	// // pullCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	// // defer cancel()
-
-	// log.Printf("Receiving messages...")
-	// err = sub.Receive(cctx, func(ctx context.Context, m *pubsub.Message) {
-	// 	if atomic.AddInt32(&i, 1) > int32(maxPullingMessages) {
-	// 		log.Printf("Max pulling messages reached, stopping...")
-	// 		cancel()
-	// 		return
-	// 	}
-	// 	// Decode message
-	// 	// var pixel PixelInfo
-	// 	// if err := json.Unmarshal(m.Data, &pixel); err != nil {
-	// 	// 	log.Printf("Error unmarshaling message ID %s: %v", m.ID, err)
-	// 	// 	m.Nack()
-	// 	// 	return
-	// 	// }
-
-	// 	// pixelsInfos = append(pixelsInfos, pixel)
-
-	// 	i++
-	// 	log.Printf("%d - Received message: %v", i, m)
-	// 	m.Ack()
-	// })
-
-	// log.Printf("Done receiving messages...")
-	// if err != nil {
-	// 	log.Printf("Error receiving messages: %v", err)
-	// 	http.Error(w, "Error processing messages", http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// log.Printf("Pixels infos: %v", pixelsInfos)
-	// w.WriteHeader(http.StatusOK)
-	// fmt.Fprintf(w, "Message processed successfully")
-}
-
 func drawPixel(w http.ResponseWriter, r *http.Request) {
-	projectId := os.Getenv("PROJECT_ID")
-	firestoreDatabase := os.Getenv("FIRESTORE_DATABASE")
-
-	if projectId == "" || firestoreDatabase == "" {
-		http.Error(w, "Environment variables are not set", http.StatusInternalServerError)
+	if projectId == "" || firestoreDatabase == "" || chunkSizeEnv == "" || topicID == "" {
+		http.Error(w, "Environement variable are not set", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Calling draw Pixel service...")
+
+	logging.Info("draw", "Calling draw Pixel service...")
+	chunkSize, err := strconv.Atoi(chunkSizeEnv)
+	if err != nil {
+		logging.Error("draw", "Error parsing chunk size", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Error while reading the request body: %v", err)
+		logging.Error("draw", "Error while reading the request body", err)
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	log.Printf("Request body: %s", body)
+	logging.InfoF("draw", "Request body: %s", body)
 
 	// Read and deserialize the PubSubMessage
 	var msg PubSubMessage
 	if err := json.Unmarshal(body, &msg); err != nil {
-		log.Printf("Error while retrieving Pub Sub Message: %v", err)
+		logging.Error("draw", "Error while retrieving Pub Sub Message", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("PubSubMessage: %+v", msg)
+	logging.InfoF("draw", "PubSubMessage: %+v", msg)
 
 	// Decode the base64 data
 	decodedData, err := base64.StdEncoding.DecodeString(msg.Message.Data)
 	if err != nil {
-		log.Printf("Error decoding base64: %v", err)
+		logging.Error("draw", "Error decoding base64", err)
 		http.Error(w, "Bad request: invalid base64", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("Decoded data: %s", decodedData)
+	logging.InfoF("draw", "Decoded data: %s", decodedData)
 
 	// Deserialize the PixelInfo
 	var pixelInfo PixelInfo
 	if err := json.Unmarshal(decodedData, &pixelInfo); err != nil {
-		log.Printf("Error while deserialize pixel info from body: %v", err)
+		logging.Error("draw", "Error while deserialize pixel info from body", err)
 		http.Error(w, "Bad Request: invalid body", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("PixelInfo: %+v", pixelInfo)
+	logging.InfoF("draw", "PixelInfo: %+v", pixelInfo)
 
 	// Save to Firestore
-	if err := savePixelToFirestore([]PixelInfo{pixelInfo}, projectId, firestoreDatabase); err != nil {
-		log.Printf("Error saving pixel: %v", err)
+	if err := savePixelToFirestore([]PixelInfo{pixelInfo}, projectId, firestoreDatabase, chunkSize, topicID); err != nil {
+		logging.Error("draw", "Error saving pixel", err)
 		http.Error(w, "Internal Error", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("Pixel inserted successfully: x=%d, y=%d", pixelInfo.X, pixelInfo.Y)
+	logging.InfoF("draw", "Pixel inserted successfully: x=%d, y=%d", pixelInfo.X, pixelInfo.Y)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Pixel inserted successfully")
 }
 
-func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreDatabase string) error {
+func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreDatabase string, chunkSize int, topicID string) error {
 	ctx := context.Background()
 	client, err := firestore.NewClientWithDatabase(ctx, projectId, firestoreDatabase)
 	if err != nil {
@@ -189,7 +142,20 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 	}
 	defer client.Close()
 
-	chunkSize := 100
+	c, err := pubsub.NewClient(ctx, projectId)
+	if err != nil {
+		logging.Error("draw", "Error while retrieving Gcloud Profile", err)
+		return fmt.Errorf("error connecting to PubSub: %w", err)
+	}
+	defer c.Close()
+
+	topic := c.Publisher(addUserTopicID)
+	topic.PublishSettings = pubsub.PublishSettings{
+		CountThreshold: 10,
+		DelayThreshold: 100 * time.Millisecond,
+		ByteThreshold:  1e6,
+	}
+	defer topic.Stop()
 
 	chunkUpdates := make(map[string]map[string]any)
 	for _, pixel := range pixelInfo {
@@ -201,12 +167,23 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 		}
 		pixelKey := fmt.Sprintf("%d_%d", localX, localY)
 
+		body, err := json.Marshal(UserInfo{
+			UserID: pixel.User,
+		})
+		if err != nil {
+			return fmt.Errorf("error marshalling user info: %w", err)
+		}
+		if _, err := topic.Publish(ctx, &pubsub.Message{
+			Data: body,
+		}).Get(ctx); err != nil {
+			logging.Error("draw", "Error publishing user message", err)
+			continue
+		}
+
 		chunkId := fmt.Sprintf("canvas_chunks_%d_%d", int(pixel.X)/chunkSize, int(pixel.Y)/chunkSize)
 		if chunkUpdates[chunkId] == nil {
 			chunkUpdates[chunkId] = map[string]any{
-				"startX": int32(localX),
-				"startY": int32(localY),
-				"size":   int32(chunkSize),
+				"size": int32(chunkSize),
 				"pixels": map[string]any{pixelKey: map[string]any{
 					"color": pixel.Color,
 					"user":  userID,
@@ -215,6 +192,7 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 				"lastUpdated": firestore.ServerTimestamp,
 			}
 		}
+
 	}
 
 	batch := client.BulkWriter(ctx)
@@ -225,6 +203,14 @@ func savePixelToFirestore(pixelInfo []PixelInfo, projectId string, firestoreData
 			return fmt.Errorf("error queuing chunk %s: %w", chunkId, err)
 		}
 	}
+
+	triggerRef := client.Collection(triggerResetName).Doc(triggerResetName)
+	if _, err := batch.Set(triggerRef, map[string]any{
+		"lastTriggered": firestore.ServerTimestamp,
+	}); err != nil {
+		return fmt.Errorf("error queuing trigger-reset document: %w", err)
+	}
+
 	batch.End()
 	return nil
 }
