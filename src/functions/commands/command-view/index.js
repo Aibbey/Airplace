@@ -44,7 +44,7 @@ async function processCommand(data) {
             userId: data.userId,
             interactionToken: data.interactionToken
         };
-        publishEvent(pubSubClient, "view-make", JSON.stringify(payload));
+        publishEvent(pubSubClient, "view.make", JSON.stringify(payload));
     } catch (err) {
         logger({ severity: Severity.ERROR, message: 'Error processing command', error: err?.stack || String(err) });
     }
