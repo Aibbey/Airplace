@@ -4,8 +4,8 @@ import { fetchAllPixels } from './firestore.js';
 import { normalizePixels, drawSnapshot, resetSubscriptionBacklog } from './utils.js';
 
 const storage = new Storage();
-const BUCKET = process.env.SNAPSHOT_BUCKET || 'serverless-epitech-snapshots';
-const SNAPSHOT_NAME = process.env.SNAPSHOT_NAME || 'snapshot-schedule.png';
+const BUCKET = process.env.SNAPSHOT_BUCKET;
+const SNAPSHOT_NAME = process.env.SNAPSHOT_NAME;
 const CANVAS_WIDTH = Number(process.env.CANVAS_WIDTH || 100);
 const CANVAS_HEIGHT = Number(process.env.CANVAS_HEIGHT || 100);
 
@@ -15,7 +15,7 @@ functions.http('snapshot-make', async (req, res) => {
 
     let filename;
     if (Buffer.from(req.body.message.data, 'base64').toString('utf-8') == "schedule") {
-      console.log('start creating sheduled file');
+      console.log('start creating scheduled file');
       filename = SNAPSHOT_NAME;
     } else {
       console.log('[snapshot-make] start reading message');

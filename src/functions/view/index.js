@@ -9,16 +9,16 @@ const storage = new Storage();
 const pubsub = new PubSub();
 
 // ---------- CONFIG ----------
-const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME || 'sub-pixel-update-view';
-const PROJECT_ID = process.env.GCLOUD_PROJECT || 'serveless-epitech-dev';
-const SNAPSHOT_BUCKET = process.env.SNAPSHOT_BUCKET || 'serverless-epitech-snapshots';
-const SNAPSHOT_NAME = process.env.SNAPSHOT_NAME || 'snapshot-schedule.png';
+const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME;
+const PROJECT_ID = process.env.GCLOUD_PROJECT;
+const SNAPSHOT_BUCKET = process.env.SNAPSHOT_BUCKET;
+const SNAPSHOT_NAME = process.env.SNAPSHOT_NAME;
 const MAX_MESSAGES_PER_PULL = Number(process.env.MAX_MESSAGES_PER_PULL || 1000);
 const MAX_TOTAL_MESSAGES = Number(process.env.MAX_TOTAL_MESSAGES || 10000);
 const ACK_EXTENSION_SECONDS = Number(process.env.ACK_EXTENSION_SECONDS || 600);
 const RESET_ACK_BATCH_SIZE = Number(process.env.RESET_ACK_BATCH_SIZE || 2000);
 const CHUNK_SIZE = Number(process.env.CHUNK_SIZE || 10);
-const RESPOND_TOPIC_NAME = process.env.RESPOND_TOPIC_NAME || 'view.callback';
+const RESPOND_TOPIC_NAME = process.env.RESPOND_TOPIC_NAME;
 
 export const COLOR_DEFINES = {
   0: "#000000",

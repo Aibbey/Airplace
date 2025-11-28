@@ -4,8 +4,8 @@ import { v1 as pubsubV1 } from '@google-cloud/pubsub';
 
 const CANVAS_WIDTH = Number(process.env.CANVAS_WIDTH || 100);
 const CANVAS_HEIGHT = Number(process.env.CANVAS_HEIGHT || 100);
-const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME || "sub-pixel-update-view";
-const GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "serveless-epitech-dev";
+const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME;
+const GCLOUD_PROJECT = process.env.GCLOUD_PROJECT;
 export const COLOR_DEFINES = {
   0: "#000000",
   1: "#696969",
