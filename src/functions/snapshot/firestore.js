@@ -5,7 +5,7 @@ const app = initializeApp({ credential: applicationDefault() });
 const db = getFirestore(app, "serverless-epitech-firestore");
 
 export async function fetchAllPixels(collectionName = "canvas_chunks") {
-  const CHUNK_SIZE = 10;
+  const CHUNK_SIZE = Number(process.env.CHUNK_SIZE || 10);
   const pixels = [];
 
   const snapshot = await db.collection(collectionName).get();

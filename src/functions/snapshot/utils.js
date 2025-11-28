@@ -1,6 +1,11 @@
 import { createCanvas, ImageData } from '@napi-rs/canvas';
 import { v1 as pubsubV1 } from '@google-cloud/pubsub';
 
+
+const CANVAS_WIDTH = Number(process.env.CANVAS_WIDTH || 100);
+const CANVAS_HEIGHT = Number(process.env.CANVAS_HEIGHT || 100);
+const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME || "sub-pixel-update-view";
+const GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "serveless-epitech-dev";
 export const COLOR_DEFINES = {
   0: "#000000",
   1: "#696969",
@@ -28,7 +33,7 @@ export const COLOR_DEFINES = {
   23: "#573400"
 };
 
-export function normalizePixels(rawPixels = [], snapshotSize = 100) {
+export function normalizePixels(rawPixels = []) {
   return rawPixels
     .map(p => {
       const x = Number(p.x);
@@ -37,10 +42,10 @@ export function normalizePixels(rawPixels = [], snapshotSize = 100) {
       const color = COLOR_DEFINES.hasOwnProperty(colorIndex) ? COLOR_DEFINES[colorIndex] : COLOR_DEFINES[0];
       return { x, y, color };
     })
-    .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x < snapshotSize && p.y >= 0 && p.y < snapshotSize);
+    .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x < CANVAS_WIDTH && p.y >= 0 && p.y < CANVAS_HEIGHT);
 }
 
-export function drawSnapshot(pixels = [], { width = 100, height = 100, tileSize = 1, background = '#FFFFFF' } = {}) {
+export function drawSnapshot(pixels = [], { width = CANVAS_WIDTH, height = CANVAS_HEIGHT, background = '#FFFFFF' } = {}) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
@@ -91,8 +96,8 @@ function hexToRgba(hex) {
 
 export async function resetSubscriptionBacklog() {
   try {
-    const subscriptionName = process.env.GCLOUD_PROJECT || "sub-pixel-update-view";
-    const projectId = process.env.GCLOUD_PROJECT || "serveless-epitech-dev";
+    const subscriptionName = SUBSCRIPTION_NAME;
+    const projectId = GCLOUD_PROJECT;
     const subscriberAdmin = new pubsubV1.SubscriberClient();
 
     const formatted = subscriberAdmin.subscriptionPath(projectId, subscriptionName);
