@@ -45,6 +45,8 @@ type AppContextType = {
   pixels: PixelData[];
   addPixel: (pixel: PixelData) => void;
   resetCanvas: () => void;
+  discordToken: string | null;
+  setDiscordToken: (token: string | null) => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,6 +67,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [targetPixel, setTargetPixel] = useState<Coord | null>(null);
   const [pixels, setPixels] = useState<PixelData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [discordToken, setDiscordToken] = useState<string | null>(null);
 
   useEffect(() => {
     const savedState = loadCanvasState();
@@ -137,6 +140,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         pixels,
         addPixel,
         resetCanvas,
+        discordToken,
+        setDiscordToken,
       }}
     >
       {children}
