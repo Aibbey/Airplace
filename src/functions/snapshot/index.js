@@ -1,7 +1,7 @@
 import { Storage } from '@google-cloud/storage';
 import functions from '@google-cloud/functions-framework';
 import { fetchAllPixels } from './firestore.js';
-import { normalizePixels, drawSnapshot } from './utils.js';
+import { normalizePixels, drawSnapshot, resetSubscriptionBacklog } from './utils.js';
 
 const storage = new Storage();
 
@@ -25,7 +25,10 @@ functions.http('snapshot-make', async (req, res) => {
     const bucketRef = storage.bucket(bucket);
     const file = bucketRef.file(filename);
     await file.save(buffer, { contentType: 'image/png' });
-
+    if (filename == 'snapshot-schedule.png') {
+      console.log('[snapshot-make] resetting subscription backlog');
+      await resetSubscriptionBacklog();
+    }
     return res.status(201).send();
   } catch (err) {
     console.error('build-image error', err);

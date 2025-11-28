@@ -1,4 +1,5 @@
 import { createCanvas, ImageData } from '@napi-rs/canvas';
+import { v1 as pubsubV1 } from '@google-cloud/pubsub';
 
 export const COLOR_DEFINES = {
   0: "#000000",
@@ -89,16 +90,16 @@ function hexToRgba(hex) {
 }
 
 export async function resetSubscriptionBacklog() {
-  const subscriberAdmin = new pubsubV1.SubscriberClient();
+  try {
+    const subscriptionName = process.env.GCLOUD_PROJECT || "sub-pixel-update-view";
+    const projectId = process.env.GCLOUD_PROJECT || "serveless-epitech-dev";
+    const subscriberAdmin = new pubsubV1.SubscriberClient();
 
-  const formatted = subscriberAdmin.subscriptionPath(projectId, subscriptionName);
-  const now = {
-    seconds: Math.floor(Date.now() / 1000),
-    nanos: 0
-  };
-  await subscriberAdmin.seek({
-    subscription: formatted,
-    time: now
-  });
-  console.log("[snapshot-make] backlog ignored, new messages will continue to stream normally");
+    const formatted = subscriberAdmin.subscriptionPath(projectId, subscriptionName);
+    const now = { seconds: Math.floor(Date.now() / 1000), nanos: 0 };
+    await subscriberAdmin.seek({ subscription: formatted, time: now });
+    console.log("[snapshot-make] backlog ignored, new messages will continue to stream normally");
+  } catch (err) {
+    console.error("[snapshot-make] failed to reset backlog:", err);
+  }
 }
