@@ -13,10 +13,6 @@ x-google-api-management:
       address: ${PROXY_INTERFACE_URL}
       pathTranslation: APPEND_PATH_TO_ADDRESS
       protocol: "http/1.1"
-    add-user-backend:
-      address: ${ADD_USER_URL}
-      pathTranslation: APPEND_PATH_TO_ADDRESS
-      protocol: "http/1.1"
     discord-interactions-backend:
       address: ${DISCORD_INTERACTIONS_URL}
       pathTranslation: APPEND_PATH_TO_ADDRESS
