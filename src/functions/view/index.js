@@ -1,10 +1,12 @@
 import { v1 as pubsubV1 } from '@google-cloud/pubsub';
+import { PubSub } from '@google-cloud/pubsub';
 import { Storage } from '@google-cloud/storage';
 import sharpMod from 'sharp';
 import functions from '@google-cloud/functions-framework';
 
 const subscriberAdmin = new pubsubV1.SubscriberClient();
 const storage = new Storage();
+const pubsub = new PubSub();
 
 // ---------- CONFIG ----------
 const SUBSCRIPTION_NAME = process.env.SUBSCRIPTION_NAME || 'sub-pixel-update-view';
@@ -277,7 +279,17 @@ functions.http('view-make', async (req, res) => {
       imagePath: file.name
     };
     console.log("[view-make] file :", file.name);
-    console.log("[view-make] Réponse publiée :", responsePayload);
+    console.log("[view-make] Réponse prête :", responsePayload);
+
+    try {
+      const topic = pubsub.topic('view.callback');
+      const messageBuffer = Buffer.from(JSON.stringify(responsePayload));
+      await topic.publishMessage({ data: messageBuffer });
+      console.info('[view-make] Published responsePayload to view.callback');
+    } catch (err) {
+      console.error('[view-make] Failed to publish responsePayload', err);
+    }
+
     return res.status(201).send();
   } catch (err) {
     console.error("Erreur dans processViewRequest :", err);
