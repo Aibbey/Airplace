@@ -1,5 +1,8 @@
 import { ephemeralMessageResponse, editOriginalMessage } from './utils/discord.js';
 import { publishEvent } from './utils/pub_sub.js';
+import { createLogger, Severity } from './utils/logging.js';
+
+const logger = createLogger({ project: 'discord-commands' });
 
 const Color = {
     'black': 0x00,
@@ -55,72 +58,146 @@ const ColorDisplay = {
     'brown': '🟤 Brown',
 }
 
-export function handleDrawPixelCommand(pubSubClient, x, y, color, userId, appId, interactionToken) {
+export function handleDrawPixelCommand(pubSubClient, x, y, color, userId, appId, interactionToken, db) {
     try {
-        const payload = {
-            x: x,
-            y: y,
-            color: Color[color],
-            user: userId,
-            timestamp: new Date().toISOString()
+        drawPixel(pubSubClient, x, y, color, userId, appId, interactionToken, db);
+        return ephemeralMessageResponse(`✏️🕖 Drawing your pixel at (**${x}**, **${y}**) in ${ColorDisplay[color]}...`);
+    } catch (err) {
+        logger({ severity: Severity.ERROR, message: 'Failed to publish pixel.draw event', error: err?.stack || String(err), x, y, color, userId });
+        return ephemeralMessageResponse(`❌ An error occurred while drawing your pixel at (**${x}**, **${y}**) in ${ColorDisplay[color]} 😢`);
+    }
+}
+
+async function drawPixel(pubSubClient, x, y, color, userId, appId, interactionToken, db) {
+    const payload = {
+        x: x,
+        y: y,
+        color: Color[color],
+        user: userId,
+        timestamp: new Date().toISOString()
+    };
+    try {
+        logger({ severity: Severity.DEBUG, message: 'Checking if user can draw pixel', x, y, color, userId });
+        let session = await db.collection("sessions").doc("session_0").get();
+        let session_data = session.data();
+        if (session_data.status == 0) {
+            await editOriginalMessage(appId, interactionToken, {
+                content: `❌🤡 Airplace session is not currently active. Please try again later.`
+            });
+            logger({ severity: Severity.NOTICE, message: 'Draw rejected: session not active', x, y, userId });
+            return;
         }
-        console.log('Publishing pixel.draw event with payload:', JSON.stringify(payload));
+        logger({ severity: Severity.DEBUG, message: 'Checking user rate limit', user: payload.user });
+        let user = await db.collection("users").doc(payload.user).get();
+        let userData = user.data();
+        if (user == null || userData == undefined) {
+            logger({ severity: Severity.NOTICE, message: 'Skipping rate limit check: user document missing', user: payload.user });
+        } else {
+            const now = Date.now();
+            const lastDraw = userData.lastUpdated ? userData.lastUpdated.toMillis() : 0;
+            const RATE_LIMIT_MS = 300 * 1000;
+            if (now - lastDraw < RATE_LIMIT_MS) {
+                let timeleft = Math.ceil((RATE_LIMIT_MS - (now - lastDraw)) / 1000);
+                logger({ severity: Severity.WARNING, message: 'User rate limited', user: payload.user, timeleft });
+                await editOriginalMessage(appId, interactionToken, {
+                    content: `❌⏳ You are drawing pixels too quickly! Please wait a moment before drawing another pixel. ${timeleft} seconds remaining`
+                });
+                return;
+            }
+        }
+        logger({ severity: Severity.INFO, message: 'Publishing pixel.draw event', payload });
         publishEvent(pubSubClient, "pixel.draw", JSON.stringify(payload)).then(async () => {
             await editOriginalMessage(appId, interactionToken, {
                 content: `✏️✅ Pixel drawn at (**${x}**, **${y}**) with color ${ColorDisplay[color]}`
             });
+            logger({ severity: Severity.INFO, message: 'Published pixel.draw and edited original message', x, y, color, user: payload.user });
+        }).catch((err) => {
+            logger({ severity: Severity.ERROR, message: 'Failed publishing pixel.draw', error: err?.stack || String(err), payload });
         });
-        return ephemeralMessageResponse(`✏️🕖 Drawing your pixel at (**${x}**, **${y}**) in ${ColorDisplay[color]}...`);
     } catch (err) {
-        console.error('Failed to publish pixel.draw event:', err);
-        return ephemeralMessageResponse(`❌ An error occurred while drawing your pixel at (**${x}**, **${y}**) in ${ColorDisplay[color]} 😢`);
+        logger({ severity: Severity.ERROR, message: 'Error checking session status', error: err?.stack || String(err), x, y, userId });
+        await editOriginalMessage(appId, interactionToken, {
+            content: `❌ An error occurred while checking the session status. Please try again later.`
+        });
     }
 }
 
 export function handleViewCommand(pubSubClient, appId, interactionToken) {
     try {
+        let payload = {
+            command: "view",
+            interactionToken: interactionToken
+        };
+        logger({ severity: Severity.INFO, message: 'Publishing command.queue event', payload: { command: 'view', interactionToken } });
+        publishEvent(pubSubClient, "command.queue", JSON.stringify(payload), { command: "view" });
         return ephemeralMessageResponse(`⚙️🕖 Generating canvas view...`);
     } catch (err) {
-        console.error('Failed to publish admin.snapshot event:', err);
+        logger({ severity: Severity.ERROR, message: 'Failed to publish command.queue event', error: err?.stack || String(err), command: 'view' });
         return ephemeralMessageResponse(`❌ An error occurred while generating canvas view 😢`);
     }
 }
 
 export function handleAdminStartCommand(pubSubClient, appId, interactionToken) {
     try {
+        let payload = {
+            command: "start",
+            interactionToken: interactionToken
+        };
+        logger({ severity: Severity.INFO, message: 'Publishing command.queue event', payload: { command: 'start', interactionToken } });
+        publishEvent(pubSubClient, "command.queue", JSON.stringify(payload), { command: "start" });
         return ephemeralMessageResponse(`▶️🕖 Starting Airplace session...`);
     } catch (err) {
-        console.error('Failed to publish admin.snapshot event:', err);
+        logger({ severity: Severity.ERROR, message: 'Failed to publish command.queue event', error: err?.stack || String(err), command: 'start' });
         return ephemeralMessageResponse(`❌ An error occurred while starting the Airplace session 😢`);
     }
 }
 
 export function handleAdminPauseCommand(pubSubClient, appId, interactionToken) {
     try {
+        let payload = {
+            command: "stop",
+            interactionToken: interactionToken
+        };
+        logger({ severity: Severity.INFO, message: 'Publishing command.queue event', payload: { command: 'stop', interactionToken } });
+        publishEvent(pubSubClient, "command.queue", JSON.stringify(payload), { command: "stop" });
         return ephemeralMessageResponse(`⏸️🕖 Pausing Airplace session...`);
     } catch (err) {
-        console.error('Failed to publish admin.snapshot event:', err);
+        logger({ severity: Severity.ERROR, message: 'Failed to publish command.queue event', error: err?.stack || String(err), command: 'stop' });
         return ephemeralMessageResponse(`❌ An error occurred while pausing the Airplace session 😢`);
     }
 }
 
 export function handleAdminResetCommand(pubSubClient, appId, interactionToken) {
     try {
+        let payload = {
+            command: "reset",
+            interactionToken: interactionToken
+        };
+        logger({ severity: Severity.INFO, message: 'Publishing command.queue event', payload: { command: 'reset', interactionToken } });
+        publishEvent(pubSubClient, "command.queue", JSON.stringify(payload), { command: "reset" });
         return ephemeralMessageResponse(`🔄🕖 Resetting Airplace session...`);
     } catch (err) {
-        console.error('Failed to publish admin.snapshot event:', err);
+        logger({ severity: Severity.ERROR, message: 'Failed to publish command.queue event', error: err?.stack || String(err), command: 'reset' });
         return ephemeralMessageResponse(`❌ An error occurred while resetting the Airplace session 😢`);
     }
 }
 
 export function handleAdminSnapshotCommand(pubSubClient, appId, interactionToken) {
     try {
-        return ephemeralMessageResponse(`⚙️🕖 Generating snapshot image...`);
+        let payload = {
+            command: "snapshot",
+            interactionToken: interactionToken
+        };
+        logger({ severity: Severity.INFO, message: 'Publishing command.queue event', payload: { command: 'snapshot', interactionToken } });
+        publishEvent(pubSubClient, "command.queue", JSON.stringify(payload), { command: "snapshot" });
+        return ephemeralMessageResponse(`⚙️🕖 Getting snapshot image...`);
     } catch (err) {
-        console.error('Failed to publish admin.snapshot event:', err);
+        logger({ severity: Severity.ERROR, message: 'Failed to publish command.queue event', error: err?.stack || String(err), command: 'snapshot' });
         return ephemeralMessageResponse(`❌ An error occurred while generating the snapshot 😢`);
     }
 }
+
+const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE, 10);
 
 const AIRPLACE_COMMAND = {
     name: 'airplace',
@@ -140,7 +217,7 @@ const AIRPLACE_COMMAND = {
                     description: 'X coordinate',
                     required: true,
                     min_value: 0,
-                    max_value: 999
+                    max_value: 99
                 },
                 {
                     type: 4,
@@ -148,7 +225,7 @@ const AIRPLACE_COMMAND = {
                     description: 'Y coordinate',
                     required: true,
                     min_value: 0,
-                    max_value: 999
+                    max_value: 99
                 },
                 {
                     type: 3,

@@ -17,6 +17,8 @@
         "@google-cloud/functions-framework": "^4.0.1",
         "@google-cloud/pubsub": "^5.2.0",
         "@google-cloud/secret-manager": "^5.0.0",
-        "discord-interactions": "^4.0.0"
+        "discord-interactions": "^4.0.0",
+        "firebase-admin": "^13.6.0",
+        "tweetnacl": "^1.0.3"
     }
 }
