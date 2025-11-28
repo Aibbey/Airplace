@@ -13,10 +13,6 @@ x-google-api-management:
       address: https://proxy-interface-hn2wtuxuha-ew.a.run.app
       pathTranslation: APPEND_PATH_TO_ADDRESS
       protocol: "http/1.1"
-    add-user-backend:
-      address: https://adduser-hn2wtuxuha-ew.a.run.app
-      pathTranslation: APPEND_PATH_TO_ADDRESS
-      protocol: "http/1.1"
     discord-interactions-backend:
       address: https://discord-interactions-hn2wtuxuha-ew.a.run.app
       pathTranslation: APPEND_PATH_TO_ADDRESS
@@ -46,26 +42,6 @@ paths:
           $ref: "#/components/responses/BadRequestError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
-  /v1/add-user:
-    post:
-      summary: Add User
-      operationId: addUser
-      requestBody:
-        required: true
-        description: This endpoint accepts any valid JSON structure (object, array, string, number, or boolean).
-        content:
-          application/json:
-            schema:
-              type: object
-      x-google-backend: add-user-backend
-      responses:
-        "200":
-          description: Succesful Response from discord
-          content:
-            application/json:
-              schema:
-                type: string
 
   /v1/discord/interactions:
     post:
