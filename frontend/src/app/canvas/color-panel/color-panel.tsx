@@ -44,7 +44,7 @@ export function ColorPanel() {
       return;
     }
   
-    const COOLDOWN_DURATION = 5 * 60 * 1000;
+    const COOLDOWN_DURATION = Number(process.env.NEXT_PUBLIC_COOLDOWN_DURATION) * 1000;
   
     const updateTimeLeft = () => {
       const lastUpdatedTime = new Date(lastUpdated).getTime();
@@ -99,15 +99,6 @@ export function ColorPanel() {
 </span>
         </button>
       )}
-      <button
-        onClick={() => {
-          setIsPanelOpen(true);
-          setShouldZoom(true);
-        }}
-        className="bg-white px-8 py-3 text-xl text-black rounded-full shadow-xl/50 hover:shadow-xl/100 transition-shadow duration-300 "
-      >
-        Place a pixel
-      </button>
 
       <div
         className={`fixed inset-0 z-10 transition-opacity duration-300 ${
