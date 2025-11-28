@@ -11,8 +11,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub/v2"
+	"example.com/logging"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/airplace/common/logging"
 )
 
 type PubSubMessage struct {

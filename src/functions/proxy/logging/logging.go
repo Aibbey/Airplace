@@ -34,7 +34,7 @@ func Info(component, message string) {
 		Component: component,
 		Severity:  "INFO",
 		Message:   message,
-	}.String())
+	})
 }
 
 // Error logs an error message with the specified component and optional error.
@@ -47,7 +47,7 @@ func Error(component, message string, err error) {
 		Component: component,
 		Severity:  "ERROR",
 		Message:   msg,
-	}.String())
+	})
 }
 
 // Warning logs a warning message with the specified component.
@@ -56,7 +56,7 @@ func Warning(component, message string) {
 		Component: component,
 		Severity:  "WARNING",
 		Message:   message,
-	}.String())
+	})
 }
 
 // InfoF logs an informational message with formatting support.

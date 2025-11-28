@@ -3,14 +3,15 @@ package reset
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
 	pubsubadmin "cloud.google.com/go/pubsub/v2/apiv1"
 	adminpb "cloud.google.com/go/pubsub/v2/apiv1/pubsubpb"
+	"example.com/logging"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/airplace/common/logging"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -24,6 +25,8 @@ var (
 func init() {
 	topicName = os.Getenv("PIXEL_UPDATE_TOPIC")
 	projectID = os.Getenv("PROJECT_ID")
+	log.SetFlags(0)
+
 	functions.CloudEvent("resetPixel", resetPixel)
 }
 

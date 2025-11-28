@@ -6,15 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"example.com/logging"
+
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/airplace/common/logging"
 )
 
 type PubSubMessage struct {
@@ -61,6 +63,7 @@ func init() {
 	topicID = os.Getenv("PIXEL_UPDATE_TOPIC")
 	addUserTopicID = os.Getenv("ADD_USER_TOPIC")
 	triggerResetName = os.Getenv("TRIGGER_RESET_NAME")
+	log.SetFlags(0)
 
 	functions.HTTP("drawPixel", drawPixel)
 }

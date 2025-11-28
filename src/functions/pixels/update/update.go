@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	pubsub "cloud.google.com/go/pubsub/v2"
+	"example.com/logging"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/airplace/common/logging"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/googleapis/google-cloudevents-go/cloud/firestoredata"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -26,6 +27,8 @@ var (
 func init() {
 	projectID = os.Getenv("PROJECT_ID")
 	topicID = os.Getenv("PIXEL_UPDATE_TOPIC")
+	log.SetFlags(0)
+
 	functions.CloudEvent("updatedPixel", updatedPixel)
 }
 

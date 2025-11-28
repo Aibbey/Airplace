@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
 	"cloud.google.com/go/firestore"
+	"example.com/logging"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/airplace/common/logging"
 )
 
 type PubSubMessage struct {
@@ -35,6 +36,7 @@ var (
 func init() {
 	projectId = os.Getenv("PROJECT_ID")
 	firestoreDatabase = os.Getenv("FIRESTORE_DATABASE")
+	log.SetFlags(0)
 
 	functions.HTTP("addUser", addUser)
 }

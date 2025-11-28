@@ -2,13 +2,13 @@ module example.com/proxy
 
 go 1.25.4
 
-replace github.com/airplace/common/logging => ../common/logging
+replace example.com/logging => ./logging
 
 require (
 	cloud.google.com/go/firestore v1.20.0
 	cloud.google.com/go/pubsub/v2 v2.3.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
-	github.com/airplace/common/logging v0.0.0
+	example.com/logging v0.0.0
 )
 
 require (
