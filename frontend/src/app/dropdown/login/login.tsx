@@ -45,6 +45,10 @@ export function Login() {
     setToken(null);
     setUser(null);
     setShowConfirmDisconnect(false);
+    setIsLoginOpen(false);
+    try {
+      window.dispatchEvent(new Event("storage"));
+    } catch (e) {}
   };
 
   const getDiscordAvatarUrl = (userId: string, avatarHash: string) => {
