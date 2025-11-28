@@ -43,6 +43,13 @@ func init() {
 
 func addUser(w http.ResponseWriter, r *http.Request) {
 	logging.Info("add_user", "Adding user...")
+
+	if projectId == "" || firestoreDatabase == "" {
+		logging.Error("add_user", "Environment variables are not set", nil)
+		http.Error(w, "Environment variables are not set", http.StatusInternalServerError)
+		return
+	}
+
 	ctx := context.Background()
 	client, err := firestore.NewClientWithDatabase(ctx, projectId, firestoreDatabase)
 	if err != nil {
@@ -51,12 +58,6 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer client.Close()
-
-	if projectId == "" || firestoreDatabase == "" {
-		logging.Error("add_user", "Environment variables are not set", nil)
-		http.Error(w, "Environment variables are not set", http.StatusInternalServerError)
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

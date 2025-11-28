@@ -47,6 +47,7 @@ func init() {
 	userCollection = os.Getenv("USER_COLLECTION")
 	rateLimit = os.Getenv("RATE_LIMIT")
 	drawPixelTopicID = os.Getenv("DRAW_PIXEL_TOPIC")
+	rateLimitDuration = time.Duration(0)
 
 	log.SetFlags(0)
 	functions.HTTP("proxyInterface", publishDraw)
@@ -58,12 +59,14 @@ func publishDraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var err error
-	rateLimitDuration, err = time.ParseDuration(rateLimit)
-	if err != nil {
-		logging.Error("proxy", "Error parsing rate limit", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+	if rateLimitDuration == 0 {
+		var err error
+		rateLimitDuration, err = time.ParseDuration(rateLimit)
+		if err != nil {
+			logging.Error("proxy", "Error parsing rate limit", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	logging.Info("proxy", "Publish Draw function started")
@@ -120,7 +123,7 @@ func publishDraw(w http.ResponseWriter, r *http.Request) {
 					lastUpdatedTime = *v
 				}
 			default:
-				logging.WarningF("proxy", "Unexpected type for lastupdated: %T, value: %v", v, v)
+				logging.WarningF("proxy", "Unexpected type for lastUpdated: %T, value: %v", v, v)
 			}
 			if !lastUpdatedTime.IsZero() {
 				timeDiff := time.Since(lastUpdatedTime)
